@@ -1,0 +1,67 @@
+image: node:16-alpine
+
+cache:
+  paths:
+    - node_modules/
+    - functions/node_modules
+
+before_script:
+  - npm i -g firebase-tools
+
+deploy-firestore-main:
+  stage: deploy
+  script:
+    - firebase deploy --only firestore --token $FIREBASE_TOKEN
+  only:
+    refs:
+      - main
+    changes:
+      - firebase-config/firestore.rules
+      - firebase-config/firestore.indexes.json
+  tags:
+    - linux
+
+deploy-functions-main:
+  stage: deploy
+  script:
+    - cd functions
+    - npm install
+    - cd ..
+    - firebase deploy --only functions --token $FIREBASE_TOKEN
+  only:
+    refs:
+      - main
+    changes:
+      - functions/**/*
+  tags:
+    - linux
+
+deploy-firestore-dev:
+  stage: deploy
+  script:
+    - firebase deploy --only firestore --token $FIREBASE_TOKEN
+  only:
+    refs:
+      - dev-branch
+    changes:
+      - firebase-config/firestore.rules
+      - firebase-config/firestore.indexes.json
+  when: manual
+  tags:
+    - linux
+
+deploy-functions-dev:
+  stage: deploy
+  script:
+    - cd functions
+    - npm install
+    - cd ..
+    - firebase deploy --only functions --token $FIREBASE_TOKEN
+  only:
+    refs:
+      - dev-branch
+    changes:
+      - functions/**/*
+  when: manual
+  tags:
+    - linux
