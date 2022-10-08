@@ -1,6 +1,7 @@
 const { func } = require('./func');
 const { InternalBalance } = require('./models/InternalBalance');
 const { InternalQRTransactionRequest } = require('./models/InternalQRTransactionRequest');
+const { auth } = require('firebase-admin');
 
 
 exports.redeemInternalQRTransactionRequest = func.https.onCall(async (data, context) => {
@@ -35,7 +36,8 @@ exports.redeemInternalQRTransactionRequest = func.https.onCall(async (data, cont
   }
 
   await taker.get();
-  if (!taker.exists) {
+  const res = await auth().getUser(req.data.creatorId);
+  if (!res) {
     return {
       result: false,
       message: 'Invalid target user!'
@@ -60,7 +62,7 @@ exports.redeemInternalQRTransactionRequest = func.https.onCall(async (data, cont
   }
 
   return {
-    result: false,
+    result: true,
     message: 'The transaction was successful'
   }
 })

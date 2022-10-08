@@ -1,4 +1,6 @@
-const { firestore } = require('firebase-admin')
+// const { firestore } = require('firebase-admin')
+const { firestore } =  require('firebase-admin')
+const FieldValue = require('firebase-admin').firestore.FieldValue;
 
 class InternalBalance {
   constructor(uid) {
@@ -12,10 +14,10 @@ class InternalBalance {
   async get() {
     const res = await this.ref.get();
     this.exists = res.exists;
-    const data = res.exists ? res.data().data : null;
+    const data = res.exists ? res.data() : null;
     if (data) {
-      this.balance = data.balance || 0;
-      this.transactions = data.transaction || []
+      this.balance = data?.balance || 0;
+      this.transactions = data?.transaction || []
     }
     return this;
   }
@@ -24,28 +26,26 @@ class InternalBalance {
     if (!this.exists && this.data) {
       return this.ref.set({
         balance: this.balance,
-        data: this.data,
         transactions: [],
       });
     } else {
-      return this.ref.update({
+      return this.ref.set({
         balance: this.balance,
-        data: this.data,
         transactions: this.transactions,
-      });
+      }, { merge: true });
     }
   }
 
   async addToBalance(amount = 0) {
-    return this.ref.update({
-      balance: FirebaseFirestore.FieldValue.increment(-amount),
-    });
+    return this.ref.set({
+      balance: FieldValue.increment(amount),
+    }, { merge: true });
   }
 
   async removeFromBalance(amount = 0) {
-    return this.ref.update({
-      balance: FirebaseFirestore.FieldValue.increment(amount),
-    });
+    return this.ref.set({
+      balance: FieldValue.increment(-amount),
+    }, { merge: true });
   }
 
   /**
@@ -60,7 +60,7 @@ class InternalBalance {
    */
   async addToHistory(transaction) {
     return this.ref.update({
-      transactions: FirebaseFirestore.FieldValue.arrayUnion(transaction)
+      transactions: FieldValue.arrayUnion(transaction)
     });
   }
 }
